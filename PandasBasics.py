@@ -22,7 +22,24 @@ print(df.info())
 print(df.describe())
 
 # Data cleaning and preprocessing
-# Check for missing data
+# Check for duplicate rows
+duplicates = df.duplicated()
+
+# Drop duplicate rows
+df_no_duplicates = df.drop_duplicates()
+
+# ... (previous code unchanged)
+
+# Custom functions and apply
+# Function to categorize the severity of cases
+def severity(cases):
+    if cases > 1000000:
+        return 'High'
+    elif cases > 100000:
+        return 'Medium'
+    else:
+        return 'Low'
+
 print(df.isnull().sum())
 
 # Drop missing data
@@ -30,6 +47,26 @@ df_clean = df.dropna()
 
 # Convert data type of 'Last_Update' column to datetime
 df_clean['Last_Update'] = pd.to_datetime(df_clean['Last_Update'])
+
+# Apply the 'severity' function to the 'Confirmed' column
+df_clean['Severity'] = df_clean['Confirmed'].apply(severity)
+
+# Element-wise operations with applymap
+# Example: converting all numerical columns to per 1,000 population values
+numerical_columns = ['Confirmed', 'Deaths', 'Recovered', 'Active']
+df_clean[numerical_columns] = df_clean[numerical_columns].applymap(lambda x: x / 1000)
+
+# Binning data using cut
+# Divide 'Confirmed' cases into bins
+bins = [0, 10000, 100000, 1000000, df_clean['Confirmed'].max()]
+labels = ['0-10k', '10k-100k', '100k-1M', '1M+']
+df_clean['Confirmed_Bins'] = pd.cut(df_clean['Confirmed'], bins=bins, labels=labels)
+
+# Rolling window calculations
+# Calculate the 3-day moving average of new cases
+df_clean['New_Cases'] = df_clean['Confirmed'].diff()
+df_clean['New_Cases_MA'] = df_clean['New_Cases'].rolling(window=3).mean()
+
 
 # Filtering, sorting, and indexing
 # Filter rows with more than 10,000 confirmed cases
